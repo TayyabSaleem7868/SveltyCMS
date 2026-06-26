@@ -162,8 +162,8 @@ const ENDPOINT_PERMISSIONS: Record<string, string | ((method: string) => string)
     ["GET", "OPTIONS"].includes(method) ? "system:read" : "system:settings",
   webhooks: "config:webhooks",
   "system-webhooks": "config:webhooks",
-  "system-virtual-folder": "system:settings",
-  systemVirtualFolder: "system:settings",
+  "system-virtual-folder": "media:read",
+  systemVirtualFolder: "media:read",
   version: (method: string) =>
     ["GET", "OPTIONS"].includes(method) ? "system:read" : "system:settings",
   permission: "system:admin",

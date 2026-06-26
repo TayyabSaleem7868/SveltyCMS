@@ -28,7 +28,7 @@ Provides an organized interface for navigating hierarchical content structures.
 	import { collection, contentStructure, setMode } from '@src/stores/collection-store.svelte.ts';
 	import { app } from '@src/stores/store.svelte';
 	import { pinnedStore } from '@src/stores/pinned-store.svelte';
-	import { ui, toggleUIElement, userPreferredState } from '@src/stores/ui-store.svelte.ts';
+	import { ui, toggleUIElement } from '@src/stores/ui-store.svelte.ts';
 	import { widgets } from '@src/stores/widget-store.svelte.ts';
 	import { debounce } from '@utils/utils';
 	import { validateSchemaWidgets } from '@widgets/widget-validation';
@@ -571,7 +571,6 @@ import { collection_no_collections_found, collections_search } from '@src/paragl
 				type="button"
 				onclick={() => {
 					toggleUIElement('leftSidebar', 'full');
-					userPreferredState.set('full');
 				}}
 				aria-label="Search collections"
 				class="flex h-10 w-10 items-center justify-center p-0! min-w-0 rounded-full hover:bg-surface-200/60 dark:hover:bg-surface-700/50"

@@ -43,9 +43,7 @@ export function ensureCsrfToken(cookies: Cookies, isSecure: boolean): string | n
 
 /**
  * Validates a CSRF token against the cookie value with constant-time comparison.
- * Returns the validation result. On success, automatically rotates the token
- * to prevent replay attacks — the consumed token is invalidated and a fresh one
- * is issued in the same cookie.
+ * Returns the validation result.
  */
 export function validateCsrfToken(
   cookies: Cookies,
@@ -65,14 +63,7 @@ export function validateCsrfToken(
     result |= cookieToken.charCodeAt(i) ^ tokenToValidate.charCodeAt(i);
   }
 
-  const isValid = result === 0;
-
-  // Rotate token on successful validation — single-use CSRF pattern
-  if (isValid) {
-    generateCsrfToken(cookies, isSecure ?? false);
-  }
-
-  return isValid;
+  return result === 0;
 }
 
 /**

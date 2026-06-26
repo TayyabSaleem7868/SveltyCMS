@@ -59,7 +59,6 @@ class UIStore {
   headerShowMore = $state(false);
   isSearchVisible = $state(false);
   isCommandBarVisible = $state(false);
-  userPreferred = $state<UIVisibility>("hidden");
 
   // Sticky action bar: pages set their action buttons here
   stickyActionContent = $state<import("svelte").Snippet | null>(null);
@@ -116,7 +115,7 @@ class UIStore {
       } else if (size === ScreenSize.MD) {
         this.state.leftSidebar = "collapsed";
       } else {
-        this.state.leftSidebar = this.userPreferred;
+        this.state.leftSidebar = "full";
       }
       this.state.rightSidebar = "hidden";
       this.state.pageheader = "hidden";
@@ -128,7 +127,7 @@ class UIStore {
 
     if (this.routeContext.isImageEditor) {
       if (isDesktop) {
-        this.state.leftSidebar = this.userPreferred;
+        this.state.leftSidebar = "full";
       } else {
         this.state.leftSidebar = "collapsed";
       }
@@ -146,7 +145,7 @@ class UIStore {
       } else if (size === ScreenSize.MD) {
         this.state.leftSidebar = "collapsed";
       } else {
-        this.state.leftSidebar = this.userPreferred;
+        this.state.leftSidebar = "full";
       }
       this.state.rightSidebar = "hidden";
       this.state.pageheader = "hidden";
@@ -160,7 +159,7 @@ class UIStore {
 
     // Mobile
     if (size === ScreenSize.XS || size === ScreenSize.SM) {
-      this.state.leftSidebar = "collapsed";
+      this.state.leftSidebar = "hidden";
       this.state.rightSidebar = "hidden";
       this.state.pageheader = showPageHeader ? "full" : "hidden";
       this.state.pagefooter = "hidden";
@@ -180,8 +179,8 @@ class UIStore {
       return;
     }
 
-    // Desktop — always respect user preference
-    this.state.leftSidebar = this.userPreferred;
+    // Desktop — always full
+    this.state.leftSidebar = "full";
     this.state.rightSidebar = "hidden";
     this.state.pageheader = showPageHeader ? "full" : "hidden";
     this.state.pagefooter = "hidden";
@@ -194,16 +193,6 @@ class UIStore {
    */
   toggle(element: keyof UIState, visibility: UIVisibility): void {
     this.state[element] = visibility;
-
-    // Save sidebar preference to localStorage
-    if (element === "leftSidebar") {
-      this.userPreferred = visibility;
-      try {
-        localStorage.setItem("sveltycms_sidebar_pref", visibility);
-      } catch {
-        /* localStorage unavailable */
-      }
-    }
 
     // Prevent auto-updates for 600ms after manual toggle
     if (element === "leftSidebar" || element === "rightSidebar") {
@@ -268,24 +257,9 @@ export const ui = new UIStore();
 let moduleEffectCleanup: (() => void) | undefined;
 
 moduleEffectCleanup = $effect.root(() => {
-  // Restore sidebar preference from localStorage on init
-  let hydrated = false;
-
   $effect(() => {
     // Only activate on the client (SSR-safe)
     if (typeof window === "undefined") return;
-
-    if (!hydrated) {
-      hydrated = true;
-      try {
-        const saved = localStorage.getItem("sveltycms_sidebar_pref") as UIVisibility | null;
-        if (saved && ["hidden", "collapsed", "full"].includes(saved)) {
-          ui.userPreferred = saved;
-        }
-      } catch {
-        /* localStorage unavailable */
-      }
-    }
 
     const size = screen.size;
     const currentMode = mode.value;
@@ -321,7 +295,7 @@ export const uiStateManager = {
   hide: (element: keyof UIState) => ui.toggle(element, "hidden"),
 };
 
-// Compatibility export for userPreferredState - wraps ui.state
+// Compatibility export for userPreferredState - no-op, kept for imports
 export const userPreferredState = {
   get leftSidebar() {
     return ui.state.leftSidebar;
@@ -332,10 +306,8 @@ export const userPreferredState = {
   get pageheader() {
     return ui.state.pageheader;
   },
-  set(state: UIVisibility) {
-    // No-op or map to something?
-    // Theme branch likely set a preference.
-    ui.userPreferred = state;
+  set(_state: UIVisibility) {
+    // No-op: sidebar state is now purely responsive
   },
 };
 

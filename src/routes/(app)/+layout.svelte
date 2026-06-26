@@ -50,9 +50,10 @@ import { getTextDirection } from "@utils/utils";
 import { mergeAdminThemeWithUserPrefs } from "@utils/theme-merge";
 import { initBounceDetector } from "@utils/bounce-detector";
 import {
-	applyLayoutPrefsToUiState,
-	diffLayoutPrefsFromTenant,
-	uiStateToLayoutPrefs,
+  applyLayoutPrefsToUiState,
+  diffLayoutPrefsFromTenant,
+  uiStateToLayoutPrefs,
+  USER_LAYOUT_PREF_KEYS,
 } from "@utils/layout-state-prefs";
 import { userThemePrefs } from "@src/stores/user-theme-prefs.svelte";
 import { onMount, untrack } from "svelte";
@@ -157,14 +158,15 @@ $effect(() => {
 	const serialized = JSON.stringify(userLayout ?? {});
 
 	if (!layoutStateRestored && dbAdminConfig?.layoutState) {
-		applyLayoutPrefsToUiState(dbAdminConfig.layoutState, ui.state);
+		const layoutKeys = USER_LAYOUT_PREF_KEYS.filter(k => k !== 'leftSidebar');
+		applyLayoutPrefsToUiState(dbAdminConfig.layoutState, ui.state, layoutKeys);
 		layoutStateRestored = true;
 	}
 
 	if (userLayout && !layoutLocked && serialized !== lastAppliedUserLayout) {
 		for (const [key, val] of Object.entries(userLayout)) {
 			if ((key === "leftSidebar" || key === "rightSidebar") && !screen.isDesktop) continue;
-			if (key === "leftSidebar" && screen.isDesktop) continue; // Respect userPreferred from localStorage
+			if (key === "leftSidebar" && screen.isDesktop) continue; // Handled by updateFromContext
 			if (val === "full" || val === "hidden") {
 				ui.state[key as keyof typeof ui.state] = val;
 			}

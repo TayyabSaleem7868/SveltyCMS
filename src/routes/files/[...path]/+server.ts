@@ -7,7 +7,6 @@
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import path from "node:path";
-import { Readable } from "node:stream";
 import { lookup } from "mime-types";
 
 import { getPublicSettingSync } from "@src/services/core/settings-service";
@@ -22,6 +21,20 @@ const _baseHeaders = {
   "Cache-Control": "public, max-age=31536000, immutable",
   "Accept-Ranges": "bytes",
 };
+
+// Converts a Node.js Readable stream to a Web ReadableStream without relying on Readable.toWeb
+function nodeToWebStream(stream: ReturnType<typeof createReadStream>): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    start(controller) {
+      stream.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
+      stream.on("end", () => controller.close());
+      stream.on("error", (err: Error) => controller.error(err));
+    },
+    cancel() {
+      stream.destroy();
+    },
+  });
+}
 
 // Lazy-load cloud storage module once
 let _cloudStorage: {
@@ -146,7 +159,7 @@ export const GET = apiHandler(async ({ params, request }) => {
 
     const chunksize = end - start + 1;
     const fileStream = createReadStream(resolvedPath, { start, end });
-    const webStream = Readable.toWeb(fileStream);
+    const webStream = nodeToWebStream(fileStream);
 
     return new Response(webStream as any, {
       status: 206,
@@ -163,7 +176,7 @@ export const GET = apiHandler(async ({ params, request }) => {
 
   // Full file stream
   const fileStream = createReadStream(resolvedPath);
-  const webStream = Readable.toWeb(fileStream);
+  const webStream = nodeToWebStream(fileStream);
 
   return new Response(webStream as any, {
     status: 200,

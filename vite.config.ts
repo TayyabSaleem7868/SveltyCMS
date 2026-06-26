@@ -645,7 +645,11 @@ function sveltyCmsPlugin(): Plugin {
       if (wasPrivateConfigMissing) {
         await fsPromises.mkdir(paths.configDir, { recursive: true });
       }
-      await initializeCollectionsStructure();
+      try {
+        await initializeCollectionsStructure();
+      } catch (e) {
+        log.warn(`Collection compilation skipped: ${(e as Error)?.message ?? e}`);
+      }
     },
     config: () => ({
       define: {
